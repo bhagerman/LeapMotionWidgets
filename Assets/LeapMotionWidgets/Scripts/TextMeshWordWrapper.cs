@@ -26,7 +26,7 @@ public class TextMeshWordWrapper : MonoBehaviour
     for (int i = 0; i < parts.Length; ++i)
     {
       clone_text_mesh.text = line + parts[i];
-      if (clone_text_mesh.renderer.bounds.extents.x > maxWidth)
+      if (clone_text_mesh.GetComponent<Renderer>().bounds.extents.x > maxWidth)
       {
         text += line.TrimEnd() + System.Environment.NewLine;
         line = "";

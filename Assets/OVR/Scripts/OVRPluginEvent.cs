@@ -1,37 +1,37 @@
 /************************************************************************************
 
-Filename    :   OVRCameraController.cs
-Content     :   Camera controller interface. 
-				This script is used to interface the OVR cameras.
-Created     :   July 9, 2014
-Authors     :   G
-
 Copyright   :   Copyright 2014 Oculus VR, LLC. All Rights reserved.
 
-Licensed under the Oculus VR Rift SDK License Version 3.1 (the "License"); 
-you may not use the Oculus VR Rift SDK except in compliance with the License, 
-which is provided at the time of installation or download, or which 
+Licensed under the Oculus VR Rift SDK License Version 3.2 (the "License");
+you may not use the Oculus VR Rift SDK except in compliance with the License,
+which is provided at the time of installation or download, or which
 otherwise accompanies this software in either electronic or hard copy form.
 
 You may obtain a copy of the License at
 
-http://www.oculusvr.com/licenses/LICENSE-3.1 
+http://www.oculusvr.com/licenses/LICENSE-3.2
 
-Unless required by applicable law or agreed to in writing, the Oculus VR SDK 
+Unless required by applicable law or agreed to in writing, the Oculus VR SDK
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
 ************************************************************************************/
+
 using UnityEngine;
 using System;
 
-// matches the events in UnityPlugin.cpp
-public enum RenderEventType 
+/// <summary>
+/// Matches the events in the native plugin.
+/// </summary>
+public enum RenderEventType
 {
 	// PC
-	// ...
+	BeginFrame = 0,
+	EndFrame = 1,
+	Initialize = 2,
+	Destroy = 3,
 
 	// Android
 	InitRenderThread = 0,
@@ -42,46 +42,40 @@ public enum RenderEventType
 	TimeWarp = 5,
 	PlatformUI = 6,
 	PlatformUIConfirmQuit = 7,
-	ResetVrModeParms = 8,
-    PlatformUITutorial = 9,
-	ShutdownRenderThread = 10,
 }
 
-#pragma warning disable 219		// The variable 'x' is assigned but its value is never used
-
-public class OVRPluginEvent
+/// <summary>
+/// Communicates with native plugin functions that run on the rendering thread.
+/// </summary>
+public static class OVRPluginEvent
 {
-	public static void Issue( RenderEventType eventType )
+	/// <summary>
+	/// Immediately issues the given event.
+	/// </summary>
+	public static void Issue(RenderEventType eventType)
 	{
-#if (UNITY_ANDROID && !UNITY_EDITOR)
-		GL.IssuePluginEvent( EncodeType( (int)eventType ) );
-#else
-		GL.IssuePluginEvent( (int)eventType );
-#endif
+		GL.IssuePluginEvent(EncodeType((int)eventType));
 	}
 
-	// Create a data channel through the single 32-bit integer we are given to
-	// communicate with the plugin.
-	// Split the 32-bit integer event data into two separate "send-two-bytes"
-	// plugin events. Then issue the explicit event that makes use of the data.
-	public static void IssueWithData( RenderEventType eventType, int eventData )
+	/// <summary>
+	/// Create a data channel through the single 32-bit integer we are given to
+	/// communicate with the plugin.
+	/// Split the 32-bit integer event data into two separate "send-two-bytes"
+	/// plugin events. Then issue the explicit event that makes use of the data.
+	/// </summary>
+	public static void IssueWithData(RenderEventType eventType, int eventData)
 	{
-#if (UNITY_ANDROID && !UNITY_EDITOR)
 		// Encode and send-two-bytes of data
-		GL.IssuePluginEvent( EncodeData( (int)eventType, eventData, 0 ) );
+		GL.IssuePluginEvent(EncodeData((int)eventType, eventData, 0));
 
 		// Encode and send remaining two-bytes of data
-		GL.IssuePluginEvent( EncodeData( (int)eventType, eventData, 1 ) );
+		GL.IssuePluginEvent(EncodeData((int)eventType, eventData, 1));
 
 		// Explicit event that uses the data
-		GL.IssuePluginEvent( EncodeType( (int)eventType ) );
-#else
-		GL.IssuePluginEvent( (int)eventType );
-#endif
+		GL.IssuePluginEvent(EncodeType((int)eventType));
 	}
 
 	// PRIVATE MEMBERS
-#if (UNITY_ANDROID && !UNITY_EDITOR)
 	//------------------------------
 	// Pack event data into a Uint32:
 	// - isDataFlag
@@ -100,32 +94,29 @@ public class OVRPluginEvent
 	private const UInt32 PAYLOAD_MASK = 0x0000FFFF;
 	private const int PAYLOAD_SHIFT = 16;
 
-	private static int EncodeType( int eventType )
+	private static int EncodeType(int eventType)
 	{
-		return (int)( (UInt32)eventType & ~IS_DATA_FLAG );	// make sure upper bit is not set
+		return (int)((UInt32)eventType & ~IS_DATA_FLAG); // make sure upper bit is not set
 	}
 
-	private static int EncodeData( int eventId, int eventData, int pos )
+	private static int EncodeData(int eventId, int eventData, int pos)
 	{
 		UInt32 data = 0;
 		data |= IS_DATA_FLAG;
-		data |= ( ( (UInt32)pos << DATA_POS_SHIFT ) & DATA_POS_MASK );
-		data |= ( ( (UInt32)eventId << EVENT_TYPE_SHIFT ) & EVENT_TYPE_MASK );
-		data |= ( ( (UInt32)eventData >> ( pos * PAYLOAD_SHIFT ) ) & PAYLOAD_MASK );
+		data |= (((UInt32)pos << DATA_POS_SHIFT) & DATA_POS_MASK);
+		data |= (((UInt32)eventId << EVENT_TYPE_SHIFT) & EVENT_TYPE_MASK);
+		data |= (((UInt32)eventData >> (pos * PAYLOAD_SHIFT)) & PAYLOAD_MASK);
 
 		return (int)data;
 	}
 
-	private static int DecodeData( int eventData )
+	private static int DecodeData(int eventData)
 	{
-		bool hasData =   ( ( (UInt32)eventData & IS_DATA_FLAG ) != 0 );
-		UInt32 pos = 	 ( ( (UInt32)eventData & DATA_POS_MASK ) >> DATA_POS_SHIFT );
-		UInt32 eventId = ( ( (UInt32)eventData & EVENT_TYPE_MASK ) >> EVENT_TYPE_SHIFT );
-		UInt32 payload = ( ( (UInt32)eventData & PAYLOAD_MASK ) << ( PAYLOAD_SHIFT * (int)pos ) );
+//		bool hasData   = (((UInt32)eventData & IS_DATA_FLAG) != 0);
+		UInt32 pos     = (((UInt32)eventData & DATA_POS_MASK) >> DATA_POS_SHIFT);
+//		UInt32 eventId = (((UInt32)eventData & EVENT_TYPE_MASK) >> EVENT_TYPE_SHIFT);
+		UInt32 payload = (((UInt32)eventData & PAYLOAD_MASK) << (PAYLOAD_SHIFT * (int)pos));
 
 		return (int)payload;
 	}
-#endif
 }
-
-#pragma warning restore 219		// The variable 'x' is assigned but its value is never used

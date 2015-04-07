@@ -17,7 +17,7 @@ namespace VRWidgets
 
     private void AddContentMomentum()
     {
-      content.rigidbody.velocity = (content.transform.position - prev_content_pos_) * 1 / (Time.deltaTime);
+      content.GetComponent<Rigidbody>().velocity = (content.transform.position - prev_content_pos_) * 1 / (Time.deltaTime);
       //Vector3 local_velocity = transform.InverseTransformDirection((content.transform.position - prev_content_pos_) * 1 / (Time.deltaTime));
       //local_velocity.z = 0.0f;
       //content.rigidbody.velocity = transform.TransformDirection(local_velocity);
