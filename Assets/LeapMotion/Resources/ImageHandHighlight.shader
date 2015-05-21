@@ -20,7 +20,7 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
 	#include "LeapCG.cginc"
 	#include "UnityCG.cginc"
 
-	#define USE_DEPTH_TEXTURE
+	#undef USE_DEPTH_TEXTURE
 
 	#pragma target 3.0
 
