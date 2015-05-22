@@ -143,9 +143,10 @@ public class StereoController : MonoBehaviour {
     if (GetComponent<GUILayer>() != null) {
       go.AddComponent<GUILayer>();
     }
+		/*
     if (GetComponent("FlareLayer") != null) {
       go.AddComponent<FlareLayer>();
-    }
+    }*/
     var cardboardEye = go.AddComponent<CardboardEye>();
     cardboardEye.eye = eye;
     cardboardEye.CopyCameraAndMakeSideBySide(this);

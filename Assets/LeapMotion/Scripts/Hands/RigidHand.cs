@@ -25,7 +25,7 @@ public class RigidHand : SkeletalHand {
 
     if (palm != null) {
       bool useVelocity = false;
-      Rigidbody palmBody = palm.GetComponent<Rigidbody>();
+  	  Rigidbody palmBody = palm.GetComponent<Rigidbody>();
       if (palmBody) {
         if (!palmBody.isKinematic) {
           useVelocity = true;
